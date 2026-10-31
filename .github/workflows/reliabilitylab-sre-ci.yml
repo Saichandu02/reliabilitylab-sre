@@ -1,0 +1,46 @@
+name: ci
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -r requirements-dev.txt
+      - name: Run tests
+        run: pytest -q
+      - name: Validate observability config
+        run: |
+          python - <<'EOF'
+          import json, yaml
+          json.load(open("grafana/dashboards/reliabilitylab.json"))
+          for f in ["prometheus/prometheus.yml", "prometheus/alerts.yml",
+                    "alertmanager/config.yml", "docker-compose.yml",
+                    "charts/reliabilitylab/Chart.yaml",
+                    "charts/reliabilitylab/values.yaml"]:
+              yaml.safe_load(open(f))
+          print("config validation ok")
+          EOF
+      - name: promtool rule tests
+        run: |
+          curl -sL https://github.com/prometheus/prometheus/releases/download/v2.54.1/prometheus-2.54.1.linux-amd64.tar.gz | tar xz -C /tmp
+          /tmp/prometheus-2.54.1.linux-amd64/promtool check rules prometheus/alerts.yml
+          cd prometheus && /tmp/prometheus-2.54.1.linux-amd64/promtool test rules alerts_test.yml
+      - name: Smoke test a live server
+        run: |
+          DATABASE_PATH=/tmp/smoke.db RELIABILITYLAB_LAB_MODE=false \
+            uvicorn app.main:app --port 8000 &
+          for i in $(seq 1 30); do curl -sf localhost:8000/healthz && break || sleep 1; done
+          BASE_URL=http://127.0.0.1:8000 python scripts/smoke_test.py
+      - name: Helm lint (chart)
+        uses: azure/setup-helm@v4
+        with:
+          version: v3.16.2
+      - run: helm lint charts/reliabilitylab && helm template lab charts/reliabilitylab > /dev/null
