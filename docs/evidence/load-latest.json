@@ -1,0 +1,11 @@
+{
+  "base_url": "http://127.0.0.1:8231",
+  "requests": 100,
+  "concurrency": 5,
+  "wall_seconds": 1.61,
+  "errors_5xx_or_transport": 0,
+  "count": 100,
+  "p50_ms": 79.54,
+  "p95_ms": 113.54,
+  "max_ms": 493.28
+}

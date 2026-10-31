@@ -1,0 +1,88 @@
+# Full local stack. NOTE: Docker is not available on the build VM, so this
+# file is configuration that was YAML-validated but NOT executed there —
+# see docs/verification.md. The app also runs Docker-free (venv + uvicorn
+# + SQLite) which is the path exercised in verification.
+#
+# Postgres is the Compose database. The application code keeps its
+# persistence behind app/db.py's OrderStore seam; the Compose deployment
+# provisions Postgres for the platform services and persistence volume
+# for the app, matching the production-shaped topology in docs/.
+services:
+  app:
+    build: .
+    environment:
+      DATABASE_PATH: /data/orders.db
+      BUILD_VERSION: "0.1.0"
+      # Lab fault injection is OFF in Compose by default. Only enable it
+      # in a clearly named local lab environment, never publicly.
+      RELIABILITYLAB_LAB_MODE: "false"
+    volumes:
+      - app-data:/data
+    ports:
+      # App is the only service a demo user needs; admin tools below are
+      # bound to loopback only.
+      - "8000:8000"
+    depends_on:
+      - postgres
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: reliabilitylab
+      POSTGRES_USER: reliabilitylab
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-local-only-change-me}
+    volumes:
+      - pg-data:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432"
+
+  prometheus:
+    image: prom/prometheus:v2.54.1
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - prom-data:/prometheus
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - app
+      - alertmanager
+
+  alertmanager:
+    image: prom/alertmanager:v0.27.0
+    command:
+      - --config.file=/etc/alertmanager/config.yml
+    volumes:
+      - ./alertmanager/config.yml:/etc/alertmanager/config.yml:ro
+    ports:
+      - "127.0.0.1:9093:9093"
+
+  alertmanager-sink:
+    # Local webhook receiver for demo alerts (no external destination).
+    image: python:3.12-alpine
+    command: ["python", "-m", "http.server", "5001"]
+    ports:
+      - "127.0.0.1:5001:5001"
+
+  grafana:
+    image: grafana/grafana:11.2.0
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-local-only-change-me}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus
+
+volumes:
+  app-data:
+  pg-data:
+  prom-data:
+  grafana-data:

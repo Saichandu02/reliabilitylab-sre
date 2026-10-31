@@ -1,0 +1,22 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - alerts.yml
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: ["alertmanager:9093"]
+
+scrape_configs:
+  - job_name: reliabilitylab
+    metrics_path: /metrics
+    static_configs:
+      # Docker Compose service name; in Kubernetes the same job is fed by
+      # service discovery / the Helm Service (see charts/).
+      - targets: ["app:8000"]
+  - job_name: prometheus
+    static_configs:
+      - targets: ["localhost:9090"]

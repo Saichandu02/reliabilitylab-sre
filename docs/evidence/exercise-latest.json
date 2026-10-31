@@ -1,0 +1,170 @@
+{
+  "exercise": "reliabilitylab-local-lab",
+  "started_at": "2026-10-31T08:17:32.939855+00:00",
+  "base_url": "http://127.0.0.1:43907",
+  "mode": "app-level local lab (not Kubernetes)",
+  "phases": {
+    "baseline": {
+      "requests": 40,
+      "errors": 0,
+      "statuses": {
+        "201": 10,
+        "200": 30
+      },
+      "count": 40,
+      "p50_ms": 5.65,
+      "p95_ms": 66.76,
+      "max_ms": 71.7
+    },
+    "latency_300ms": {
+      "requests": 8,
+      "errors": 0,
+      "statuses": {
+        "201": 2,
+        "200": 6
+      },
+      "count": 8,
+      "p50_ms": 306.24,
+      "p95_ms": 316.31,
+      "max_ms": 316.31
+    },
+    "fault": {
+      "requests": 16,
+      "errors": 12,
+      "statuses": {
+        "503": 12,
+        "200": 4
+      },
+      "count": 16,
+      "p50_ms": 5.11,
+      "p95_ms": 73.37,
+      "max_ms": 73.37,
+      "dependency_up": 0.0,
+      "healthz_status_during_fault": 200,
+      "detection_ms_readyz_503": 4.1
+    },
+    "recovery": {
+      "requests": 20,
+      "errors": 0,
+      "statuses": {
+        "201": 5,
+        "200": 15
+      },
+      "count": 20,
+      "p50_ms": 4.94,
+      "p95_ms": 68.96,
+      "max_ms": 73.97,
+      "recovery_ms_readyz_200": 4.0,
+      "durable_order_visible_after_recovery": true
+    },
+    "restart": {
+      "durable_order_visible_after_restart": true,
+      "orders_count_after_restart": 18
+    }
+  },
+  "timeline": [
+    {
+      "at": "2026-10-31T08:17:32.939824+00:00",
+      "event": "server_started",
+      "base_url": "http://127.0.0.1:43907"
+    },
+    {
+      "at": "2026-10-31T08:17:33.562266+00:00",
+      "event": "baseline_done",
+      "requests": 40,
+      "errors": 0,
+      "statuses": {
+        "201": 10,
+        "200": 30
+      },
+      "count": 40,
+      "p50_ms": 5.65,
+      "p95_ms": 66.76,
+      "max_ms": 71.7
+    },
+    {
+      "at": "2026-10-31T08:17:35.643936+00:00",
+      "event": "latency_phase_done",
+      "requests": 8,
+      "errors": 0,
+      "statuses": {
+        "201": 2,
+        "200": 6
+      },
+      "count": 8,
+      "p50_ms": 306.24,
+      "p95_ms": 316.31,
+      "max_ms": 316.31
+    },
+    {
+      "at": "2026-10-31T08:17:35.643969+00:00",
+      "event": "fault_injected_dependency_down"
+    },
+    {
+      "at": "2026-10-31T08:17:35.947871+00:00",
+      "event": "fault_observed",
+      "requests": 16,
+      "errors": 12,
+      "statuses": {
+        "503": 12,
+        "200": 4
+      },
+      "count": 16,
+      "p50_ms": 5.11,
+      "p95_ms": 73.37,
+      "max_ms": 73.37,
+      "dependency_up": 0.0,
+      "healthz_status_during_fault": 200,
+      "detection_ms_readyz_503": 4.1
+    },
+    {
+      "at": "2026-10-31T08:17:35.947932+00:00",
+      "event": "alerts_evaluated",
+      "DependencyDown": true,
+      "HighErrorRate": true
+    },
+    {
+      "at": "2026-10-31T08:17:35.947942+00:00",
+      "event": "recovery_started_dependency_up"
+    },
+    {
+      "at": "2026-10-31T08:17:36.271002+00:00",
+      "event": "recovery_done",
+      "requests": 20,
+      "errors": 0,
+      "statuses": {
+        "201": 5,
+        "200": 15
+      },
+      "count": 20,
+      "p50_ms": 4.94,
+      "p95_ms": 68.96,
+      "max_ms": 73.97,
+      "recovery_ms_readyz_200": 4.0,
+      "durable_order_visible_after_recovery": true
+    },
+    {
+      "at": "2026-10-31T08:17:36.528428+00:00",
+      "event": "server_stopped_for_restart"
+    },
+    {
+      "at": "2026-10-31T08:17:40.651958+00:00",
+      "event": "restart_done",
+      "durable_order_visible_after_restart": true,
+      "orders_count_after_restart": 18
+    }
+  ],
+  "durable_order_id": "b3e8eb6f0522",
+  "alert_evaluation": {
+    "DependencyDown": {
+      "would_fire": true,
+      "basis": "dependency_up == 0 in fault-phase /metrics"
+    },
+    "HighErrorRate": {
+      "would_fire": true,
+      "basis": "fault-phase 5xx rate 75% > 25% threshold (prometheus/alerts.yml)"
+    }
+  },
+  "finished_at": "2026-10-31T08:17:40.652010+00:00",
+  "result": "PASS"
+}

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}-reliabilitylab
+  labels:
+    app: reliabilitylab
+spec:
+  type: {{ .Values.service.type }}
+  selector:
+    app: reliabilitylab
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: 8000

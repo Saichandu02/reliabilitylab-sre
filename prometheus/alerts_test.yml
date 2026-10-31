@@ -1,0 +1,42 @@
+# promtool test rules prometheus/alerts_test.yml
+# Verifies DependencyDown and HighErrorRate fire from recorded-style series.
+rule_files:
+  - alerts.yml
+
+tests:
+  - interval: 15s
+    name: dependency down fires DependencyDown
+    input_series:
+      - series: 'dependency_up{instance="app:8000"}'
+        values: '1 0 0 0 0 0 0 0 0'
+    alert_rule_test:
+      - eval_time: 2m
+        alertname: DependencyDown
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: reliabilitylab
+              instance: "app:8000"
+            exp_annotations:
+              summary: "ReliabilityLab database dependency is down"
+              description: "dependency_up has been 0 for 15s. Readiness is failing; liveness is intentionally unaffected. See runbook docs/runbooks/dependency-outage.md."
+              runbook: "docs/runbooks/dependency-outage.md"
+
+  - interval: 15s
+    name: sustained 5xx fires HighErrorRate
+    input_series:
+      - series: 'http_requests_total{method="POST",route="/api/orders",status="503"}'
+        values: '0+10x20'
+      - series: 'http_requests_total{method="POST",route="/api/orders",status="201"}'
+        values: '0x20'
+    alert_rule_test:
+      - eval_time: 4m
+        alertname: HighErrorRate
+        exp_alerts:
+          - exp_labels:
+              severity: critical
+              service: reliabilitylab
+            exp_annotations:
+              summary: "ReliabilityLab 5xx error rate above 25% over 2m"
+              description: "More than a quarter of requests are failing with 5xx. Check dependency_up and structured logs by request ID."
+              runbook: "docs/runbooks/dependency-outage.md"

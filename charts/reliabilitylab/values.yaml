@@ -1,0 +1,34 @@
+replicaCount: 2
+image:
+  repository: reliabilitylab
+  tag: "0.1.0"
+  pullPolicy: IfNotPresent
+service:
+  type: ClusterIP
+  port: 8000
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+env:
+  buildVersion: "0.1.0"
+  # Fault injection stays OFF in Kubernetes by default. The incident
+  # exercises in docs/ use deployment changes (broken version, DB
+  # unavailability in the lab namespace), not a public fault switch.
+  labMode: "false"
+persistence:
+  enabled: true
+  size: 1Gi
+  mountPath: /data
+serviceAccount:
+  create: true
+  name: ""
+security:
+  runAsNonRoot: true
+  runAsUser: 1000
+probes:
+  livenessPath: /healthz
+  readinessPath: /readyz

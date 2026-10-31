@@ -1,0 +1,25 @@
+# Local demo routing only. The receiver is a local webhook sink
+# (scripts/webhook_sink.py can stand in for it, or any local HTTP listener).
+# No external notification destination is configured by default; adding one
+# (Slack/email/PagerDuty) requires an explicitly configured destination
+# and secrets outside Git.
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: local-webhook
+  group_by: [alertname, service]
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 4h
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: local-webhook
+      repeat_interval: 30m
+
+receivers:
+  - name: local-webhook
+    webhook_configs:
+      - url: "http://alertmanager-sink:5001/alerts"
+        send_resolved: true

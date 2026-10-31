@@ -1,0 +1,13 @@
+# Local kind cluster for the Kubernetes incident exercises.
+# NOT executed on the build VM (no Docker/kind there) — see
+# docs/verification.md for which exercises ran locally instead.
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: reliabilitylab
+nodes:
+  - role: control-plane
+    extraPortMappings:
+      - containerPort: 30080
+        hostPort: 8000
+        protocol: TCP
+  - role: worker

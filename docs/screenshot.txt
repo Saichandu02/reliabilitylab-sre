@@ -1,0 +1,18 @@
+ReliabilityLab — captured output (screenshot substitute; text capture from the running app, 2026-10-31)
+
+== GET / (status page, first lines) ==
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>ReliabilityLab Status</title>
+<style>body{font-family:system-ui,sans-serif;max-width:720px;margin:2rem auto;padding:0 1rem}
+pre{background:#111;color:#eee;padding:1rem;overflow:auto}input{margin:.2rem}</style></head>
+<body><h1>ReliabilityLab</h1>
+<p>Observable order API — status and demo page (fictional orders only).</p>
+<h2>Service status</h2><pre id="status">loading…</pre>
+<h2>Create an order</h2>
+
+== POST /api/orders ==
+{"id":"e760e8a54984","item":"widget","quantity":2,"unit_price_minor":1500,"total_minor":3000,"customer_ref":"demo-customer","status":"created","created_at":"2026-10-31T08:19:39.542010+00:00"}
+== GET /api/status ==
+{"service":"reliabilitylab","version":"0.1.0","status":"ok","dependency":"up","simulated_latency_ms":0,"orders_count":1,"lab_mode":true,"uptime_seconds":0.599,"time":"2026-10-31T08:19:39.564096+00:00"}
+== GET /readyz ==
+{"status":"ready","dependency":"up"}

@@ -1,0 +1,4 @@
+fastapi>=0.115,<0.116
+uvicorn>=0.30,<0.31
+prometheus-client>=0.20,<0.21
+pydantic>=2.9,<3

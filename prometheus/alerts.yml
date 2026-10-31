@@ -1,0 +1,61 @@
+groups:
+  - name: reliabilitylab
+    interval: 15s
+    rules:
+      - alert: DependencyDown
+        expr: dependency_up == 0
+        for: 15s
+        labels:
+          severity: critical
+          service: reliabilitylab
+        annotations:
+          summary: "ReliabilityLab database dependency is down"
+          description: "dependency_up has been 0 for 15s. Readiness is failing; liveness is intentionally unaffected. See runbook docs/runbooks/dependency-outage.md."
+          runbook: "docs/runbooks/dependency-outage.md"
+
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{status=~"5.."}[2m]))
+            / sum(rate(http_requests_total[2m])) > 0.25
+        for: 1m
+        labels:
+          severity: critical
+          service: reliabilitylab
+        annotations:
+          summary: "ReliabilityLab 5xx error rate above 25% over 2m"
+          description: "More than a quarter of requests are failing with 5xx. Check dependency_up and structured logs by request ID."
+          runbook: "docs/runbooks/dependency-outage.md"
+
+      - alert: HighLatencyP95
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 1.0
+        for: 2m
+        labels:
+          severity: warning
+          service: reliabilitylab
+        annotations:
+          summary: "ReliabilityLab p95 latency above 1s over 5m"
+          description: "p95 request duration exceeds the 1s latency SLI threshold. See docs/slo.md."
+          runbook: "docs/runbooks/dependency-outage.md"
+
+      - alert: ServiceDown
+        expr: up{job="reliabilitylab"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: reliabilitylab
+        annotations:
+          summary: "ReliabilityLab is not being scraped / is down"
+          description: "Prometheus has not scraped the service for 1m. Distinguish process-down (this alert) from dependency-down (DependencyDown)."
+          runbook: "docs/runbooks/pod-restart.md"
+
+      - alert: AppRestartSuspected
+        expr: increase(process_start_time_seconds[5m]) > 0
+        for: 0m
+        labels:
+          severity: info
+          service: reliabilitylab
+        annotations:
+          summary: "ReliabilityLab process (re)started in the last 5m"
+          description: "Informational: a new process start was observed. Correlate with deployments before treating as an incident."
